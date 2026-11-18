@@ -1,0 +1,60 @@
+# =====================================================================
+# Entorno de trabajo local con mise (https://mise.jdx.dev).
+#
+# Docker ejecuta la plantilla completa sin instalar nada más. mise sirve
+# para DESARROLLAR: instala las mismas versiones que usan los Dockerfiles,
+# para que el editor entienda el código y el backend se pueda ejecutar,
+# probar y depurar fuera de los contenedores.
+#
+#   mise install          instala Java, Maven y Node.js
+#   mise tasks            lista las tareas disponibles
+#   mise run <tarea>      ejecuta una tarea (por ejemplo: mise run backend)
+# =====================================================================
+
+[tools]
+# Mantener estas versiones iguales a las de los Dockerfiles.
+java = "temurin-25"
+maven = "3.9"
+node = "26"
+
+[env]
+# Exporta las variables del .env al entrar en la carpeta del proyecto.
+# Si el archivo no existe, se omite sin error.
+_.file = ".env"
+
+[tasks.instalar]
+description = "Instala las dependencias del frontend (autocompletado del editor y modo local)"
+dir = "{{config_root}}/frontend"
+run = "npm install"
+
+[tasks.bd]
+description = "Levanta solo PostgreSQL en Docker"
+run = "docker compose up -d db"
+
+[tasks.backend]
+description = "Ejecuta el backend localmente; reinicia solo al recompilar (DevTools)"
+dir = "{{config_root}}/backend"
+run = "mvn spring-boot:run"
+
+[tasks.frontend]
+description = "Ejecuta el frontend localmente con recarga en caliente"
+dir = "{{config_root}}/frontend"
+run = "npm run dev"
+
+[tasks.pruebas-backend]
+description = "Pruebas del backend (la de integración necesita Docker)"
+dir = "{{config_root}}/backend"
+run = "mvn test"
+
+[tasks.pruebas-frontend]
+description = "Pruebas del frontend con Vitest"
+dir = "{{config_root}}/frontend"
+run = "npm test"
+
+[tasks.pruebas]
+description = "Todas las pruebas"
+depends = ["pruebas-backend", "pruebas-frontend"]
+
+[tasks.verificar]
+description = "Construye y levanta todo en Docker, como lo ejecutaría otra persona"
+run = "docker compose up -d --build"

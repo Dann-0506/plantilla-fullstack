@@ -1,0 +1,65 @@
+# =====================================================================
+# Entorno completo de la plantilla: base de datos, backend y frontend.
+#
+#   docker compose up -d --build     levantar (o reconstruir) todo
+#   docker compose up -d db          solo la base (desarrollo con mise)
+#   docker compose logs -f backend   ver el log del backend
+#   docker compose down              detener (conserva los datos)
+#   docker compose down -v           detener y BORRAR los datos
+#
+# Las variables ${...} se leen del archivo .env (copia de .env.example).
+# =====================================================================
+name: plantilla
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-plantilla}
+      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER. Copie .env.example a .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD. Copie .env.example a .env}
+    ports:
+      # Solo accesible desde el propio equipo (127.0.0.1), para pgAdmin o DBeaver.
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      # Dentro de la red de Compose, la base se localiza por el nombre "db".
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-plantilla}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      CORS_ORIGENES_PERMITIDOS: ${CORS_ORIGENES_PERMITIDOS:-http://localhost:5173,http://127.0.0.1:5173}
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      # El navegador (fuera de Docker) llama al puerto publicado del backend.
+      VITE_API_URL: http://localhost:${BACKEND_HOST_PORT:-8080}
+      VITE_WATCH_POLLING: ${VITE_WATCH_POLLING:-false}
+    volumes:
+      # Monta el código para recargar los cambios al instante...
+      - ./frontend:/app
+      # ...sin pisar las dependencias instaladas dentro de la imagen.
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_HOST_PORT:-5173}:5173"
+    # Sin depends_on: el navegador es quien llama al backend, así que el
+    # frontend puede correr en Docker con el backend ejecutándose fuera.
+
+volumes:
+  pgdata:

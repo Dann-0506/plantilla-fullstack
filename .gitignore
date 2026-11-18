@@ -1,0 +1,21 @@
+# Variables de entorno con secretos: solo se versiona .env.example
+.env
+
+# Respaldos de la base de datos (pueden contener datos reales)
+database/respaldos/*
+!database/respaldos/.gitkeep
+
+# Backend
+backend/target/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+
+# IDE y sistema operativo
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
