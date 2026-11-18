@@ -1,6 +1,6 @@
 # Plantilla fullstack: Spring Boot + React + PostgreSQL
-
-Entorno de desarrollo ya integrado para construir aplicaciones web con base de
+ 
+ Entorno de desarrollo ya integrado para construir aplicaciones web con base de
 datos. La plantilla resuelve la configuración (contenedores, conexión a la base,
 migraciones, CORS, manejo de errores, pruebas) para que el tiempo se dedique al
 diseño de los datos y a las reglas de negocio del proyecto.
